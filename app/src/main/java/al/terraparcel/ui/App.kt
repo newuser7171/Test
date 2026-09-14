@@ -43,7 +43,7 @@ import java.io.File
 import kotlin.math.roundToInt
 
 val LocalLanguage=staticCompositionLocalOf { "en" }
-@Composable fun T(s:String):String {
+@Composable fun tr(s:String):String {
     val context=LocalContext.current
     val language=LocalLanguage.current
     val resources=remember(context,language){
@@ -53,7 +53,7 @@ val LocalLanguage=staticCompositionLocalOf { "en" }
     return if(id!=0)resources.getString(id)else s
 }
 fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
-@Composable fun Action(text:String,enabled:Boolean=true,click:()->Unit) {OutlinedButton(onClick=click,enabled=enabled,contentPadding=PaddingValues(horizontal=14.dp,vertical=10.dp)){Text(T(text))}}
+@Composable fun Action(text:String,enabled:Boolean=true,click:()->Unit) {OutlinedButton(onClick=click,enabled=enabled,contentPadding=PaddingValues(horizontal=14.dp,vertical=10.dp)){Text(tr(text))}}
 @Composable fun Strip(content:@Composable RowScope.()->Unit){Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically,content=content)}
 @Composable fun TerraApp(vm:LandViewModel=viewModel()) {
     val prefs by vm.prefs.collectAsStateWithLifecycle()
@@ -90,7 +90,7 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
     var permission by remember { mutableStateOf<String?>(null) }
     var fullScreen by remember { mutableStateOf(false) }
     var follow by remember { mutableStateOf(false) }
-    var scale by remember { mutableStateOf(0.0) }
+    var scale by remember { mutableDoubleStateOf(0.0) }
     var format by remember { mutableStateOf("geojson") }
     var exportAll by remember { mutableStateOf(false) }
     var photoPoint by remember { mutableStateOf<String?>(null) }
@@ -129,40 +129,40 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
     val metrics=Geo.metrics(draft.points,draft.shape)
     Scaffold(
         snackbarHost={SnackbarHost(snackbar)},
-        topBar={if(!fullScreen)TopAppBar(title={Column {Text("TerraParcel",fontWeight=FontWeight.Bold);Text(T("Land measurement"),style=MaterialTheme.typography.labelSmall)}},actions={TextButton(onClick={coordinateDialog=true}){Text(T("Coordinates"))}})},
-        bottomBar={if(!fullScreen)NavigationBar {listOf("Home","Map","My Parcels","Settings").forEach { p->NavigationBarItem(selected=page==p,onClick={page=p},icon={Text(when(p){"Home"->"⌂";"Map"->"◇";"My Parcels"->"▤";else->"⚙"})},label={Text(T(p),maxLines=1)})}}}
+        topBar={if(!fullScreen)TopAppBar(title={Column {Text("TerraParcel",fontWeight=FontWeight.Bold);Text(tr("Land measurement"),style=MaterialTheme.typography.labelSmall)}},actions={TextButton(onClick={coordinateDialog=true}){Text(tr("Coordinates"))}})},
+        bottomBar={if(!fullScreen)NavigationBar {listOf("Home","Map","My Parcels","Settings").forEach { p->NavigationBarItem(selected=page==p,onClick={page=p},icon={Text(when(p){"Home"->"⌂";"Map"->"◇";"My Parcels"->"▤";else->"⚙"})},label={Text(tr(p),maxLines=1)})}}}
     ){padding->
         Column(Modifier.padding(padding).fillMaxSize()){
             if(busy)LinearProgressIndicator(Modifier.fillMaxWidth())
             when(page){
                 "Home"->Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
-                    Text(T("Your land, on your device"),style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
+                    Text(tr("Your land, on your device"),style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
                     Card(Modifier.fillMaxWidth()){Column(Modifier.padding(20.dp)){
-                        Text("${active.size} "+T("My Parcels"),style=MaterialTheme.typography.titleLarge)
+                        Text("${active.size} "+tr("My Parcels"),style=MaterialTheme.typography.titleLarge)
                         Text(number(Geo.area(active.sumOf {it.area},prefs.areaUnit))+" "+prefs.areaUnit,style=MaterialTheme.typography.headlineLarge)
-                        Text(T("Total Saved Area"))
+                        Text(tr("Total Saved Area"))
                     }}
                     Box(Modifier.height(170.dp).fillMaxWidth()){
                         val previewHandle=remember {MapHandle()}
                         ParcelMap(Modifier.fillMaxSize(),Draft(),active,prefs,null,null,previewHandle,{},{},{_,_->},{})
                         LaunchedEffect(active){kotlinx.coroutines.delay(600);previewHandle.go(active.flatMap {it.draft().points})}
-                        FilledTonalButton(onClick={page="Map"},modifier=Modifier.align(Alignment.TopEnd).padding(8.dp)){Text(T("Open map"))}
+                        FilledTonalButton(onClick={page="Map"},modifier=Modifier.align(Alignment.TopEnd).padding(8.dp)){Text(tr("Open map"))}
                     }
                     Strip {Action("Measure Area"){vm.new(Shape.POLYGON);page="Map"};Action("Import"){importLauncher.launch(arrayOf("*/*"))};Action("Export"){exportAll=true;exportDialog=true}}
-                    Text(T("Recent Measurements"),style=MaterialTheme.typography.titleMedium)
+                    Text(tr("Recent Measurements"),style=MaterialTheme.typography.titleMedium)
                     active.take(5).forEach {p->ParcelCard(p,prefs,{vm.open(p);page="Map"},{vm.favorite(p)})}
-                    Text(T("Phone measurements are estimates, not official cadastral or legal boundaries."),style=MaterialTheme.typography.bodySmall)
+                    Text(tr("Phone measurements are estimates, not official cadastral or legal boundaries."),style=MaterialTheme.typography.bodySmall)
                 }
                 "My Parcels"->{
                     var query by remember {mutableStateOf("")}
                     var sort by remember {mutableStateOf("Recent")}
                     var trash by remember {mutableStateOf(false)}
-                    OutlinedTextField(query,{query=it},Modifier.fillMaxWidth().padding(horizontal=12.dp),label={Text(T("Search saved parcels"))},singleLine=true)
+                    OutlinedTextField(query,{query=it},Modifier.fillMaxWidth().padding(horizontal=12.dp),label={Text(tr("Search saved parcels"))},singleLine=true)
                     Strip {Action(if(trash)"Show active" else "Trash"){trash=!trash};Action(sort){sort=when(sort){"Recent"->"Name";"Name"->"Area";else->"Recent"}};Action("Export all"){exportAll=true;exportDialog=true}}
                     val filtered=parcels.filter {(it.deletedAt!=null)==trash && (it.name+" "+it.notes+" "+it.owner+" "+it.category).contains(query,true)}
                     val sorted=when(sort){"Name"->filtered.sortedBy{it.name.lowercase()};"Area"->filtered.sortedByDescending{it.area};else->filtered.sortedByDescending{it.modified}}
                     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(12.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
-                        if(sorted.isEmpty())item{Text(T("No saved measurements"))}
+                        if(sorted.isEmpty())item{Text(tr("No saved measurements"))}
                         items(sorted,key={it.id}){p->
                             Column{
                                 ParcelCard(p,prefs,{vm.open(p);page="Map"},{vm.favorite(p)})
@@ -176,16 +176,16 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                 }
                 "Settings"->SettingsPanel(prefs,vm::settings,{backupLauncher.launch("TerraParcel-backup.zip")},{restoreWarning=true},{exportAll=true;exportDialog=true},{page="GPS Tools"})
                 "GPS Tools"->Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(12.dp)){
-                    Text(T("GPS Tools"),style=MaterialTheme.typography.headlineMedium)
+                    Text(tr("GPS Tools"),style=MaterialTheme.typography.headlineMedium)
                     Text("PHONE GPS")
-                    Text(fix?.point?.let {coordinateText(it)}?:T("Waiting for GPS"))
-                    Text(T("Speed")+": "+(fix?.speed?.let {number(it.toDouble())+" m/s"}?:"—"))
-                    Text(T("Heading")+": "+(fix?.bearing?.let {number(it.toDouble())+"°"}?:"—"))
-                    Text(T("Points")+": "+draft.points.size)
-                    Text(T("Distance walked")+": "+number(Geo.metrics(draft.points,Shape.LINE).second)+" m")
+                    Text(fix?.point?.let {coordinateText(it)}?:tr("Waiting for GPS"))
+                    Text(tr("Speed")+": "+(fix?.speed?.let {number(it.toDouble())+" m/s"}?:"—"))
+                    Text(tr("Heading")+": "+(fix?.bearing?.let {number(it.toDouble())+"°"}?:"—"))
+                    Text(tr("Points")+": "+draft.points.size)
+                    Text(tr("Distance walked")+": "+number(Geo.metrics(draft.points,Shape.LINE).second)+" m")
                     Action("Current Location"){permission="location"}
                     Action("Map"){page="Map"}
-                    Text(T("Accuracy labels are guidance only. Accuracy is reported by Android."))
+                    Text(tr("Accuracy labels are guidance only. Accuracy is reported by Android."))
                 }
                 "Map"->{
                     Strip {Action("Layers"){page="Settings"};Action("Search"){page="My Parcels"};Action(if(fullScreen)"Exit full screen" else "Full screen"){fullScreen=!fullScreen};Action("GPS Tools"){fullScreen=false;page="GPS Tools"}}
@@ -199,14 +199,14 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                         Surface(Modifier.align(Alignment.BottomStart).padding(8.dp),shape=RoundedCornerShape(8.dp),tonalElevation=4.dp){
                             Column(Modifier.padding(8.dp)){Box(Modifier.width(100.dp).height(2.dp).background(MaterialTheme.colorScheme.onSurface));Text(number(scale)+" m",style=MaterialTheme.typography.labelSmall)}
                         }
-                        if(!prefs.onlineMaps)Surface(Modifier.align(Alignment.TopCenter).padding(8.dp),shape=RoundedCornerShape(8.dp)){Text(T("Offline canvas · enable maps in Layers"),Modifier.padding(8.dp))}
+                        if(!prefs.onlineMaps)Surface(Modifier.align(Alignment.TopCenter).padding(8.dp),shape=RoundedCornerShape(8.dp)){Text(tr("Offline canvas · enable maps in Layers"),Modifier.padding(8.dp))}
                     }
                     Surface(tonalElevation=3.dp){
                         Column(Modifier.padding(horizontal=12.dp,vertical=8.dp),verticalArrangement=Arrangement.spacedBy(4.dp)){
-                            Text(if(draft.shape==Shape.POLYGON)number(Geo.area(metrics.first,prefs.areaUnit))+" "+prefs.areaUnit else T("Distance")+": "+number(Geo.length(metrics.second,prefs.lengthUnit))+" "+prefs.lengthUnit,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
-                            Text(T("Perimeter")+": "+number(Geo.length(metrics.second,prefs.lengthUnit))+" "+prefs.lengthUnit+"  ·  "+draft.points.size+" "+T("Points"),style=MaterialTheme.typography.bodySmall)
+                            Text(if(draft.shape==Shape.POLYGON)number(Geo.area(metrics.first,prefs.areaUnit))+" "+prefs.areaUnit else tr("Distance")+": "+number(Geo.length(metrics.second,prefs.lengthUnit))+" "+prefs.lengthUnit,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
+                            Text(tr("Perimeter")+": "+number(Geo.length(metrics.second,prefs.lengthUnit))+" "+prefs.lengthUnit+"  ·  "+draft.points.size+" "+tr("Points"),style=MaterialTheme.typography.bodySmall)
                             val accuracy=fix?.point?.accuracy
-                            Text("GPS: "+(accuracy?.let {"±${number(it.toDouble())} m · "+T(Geo.accuracyLabel(it))}?:T("Unknown")),color=if(accuracy!=null && accuracy<=prefs.maxAccuracy)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+                            Text("GPS: "+(accuracy?.let {"±${number(it.toDouble())} m · "+tr(Geo.accuracyLabel(it))}?:tr("Unknown")),color=if(accuracy!=null && accuracy<=prefs.maxAccuracy)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
                             Strip {
                                 Action("Undo",undo){vm.undo()};Action("Redo",redo){vm.redo()}
                                 Action("Save",!busy && draft.points.isNotEmpty()){vm.stopWalk();saveDialog=true}
@@ -227,7 +227,7 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                                     }
                                 }}
                             }
-                            Text(T("Long-press to add. Tap a vertex, then drag to move."),style=MaterialTheme.typography.labelSmall)
+                            Text(tr("Long-press to add. Tap a vertex, then drag to move."),style=MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
@@ -238,9 +238,9 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
         val i=selected!!;val p=draft.points[i]
         ModalBottomSheet(onDismissRequest={showPoint=false}){
             Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)){
-                Text(T("Coordinates")+" · ${i+1}",style=MaterialTheme.typography.titleLarge)
+                Text(tr("Coordinates")+" · ${i+1}",style=MaterialTheme.typography.titleLarge)
                 Text(coordinateText(p))
-                if(i>0)Text(T("Distance")+": "+number(Geo.distance(draft.points[i-1],p))+" m · "+T("Bearing")+": "+number(Geo.bearing(draft.points[i-1],p))+"°")
+                if(i>0)Text(tr("Distance")+": "+number(Geo.distance(draft.points[i-1],p))+" m · "+tr("Bearing")+": "+number(Geo.bearing(draft.points[i-1],p))+"°")
                 Strip {
                     Action("Copy"){context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("WGS84","${p.lat}, ${p.lon}"))}
                     Action("Delete"){vm.deletePoint(i)}
@@ -249,7 +249,7 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                 }
                 Action("Move on map"){showPoint=false;vm.message.value="Drag the selected orange point to move it"}
                 CoordinateEdit(p){vm.move(i,it);vm.selected.value=null}
-                Text(T("Close this sheet to continue drawing."),style=MaterialTheme.typography.bodySmall)
+                Text(tr("Close this sheet to continue drawing."),style=MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -257,13 +257,13 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
     if(showProfile)ModalBottomSheet(onDismissRequest={showProfile=false}){ElevationProfile(draft)}
     if(saveDialog)SaveDialog(draft,{saveDialog=false}){vm.save(it){saveDialog=false}}
     if(coordinateDialog)CoordinateDialog({coordinateDialog=false}){p->follow=false;vm.cameraTarget.value=listOf(p);page="Map";coordinateDialog=false}
-    if(permission!=null)AlertDialog(onDismissRequest={permission=null},title={Text(T("Location permission"))},text={Text(T("GPS is used to show your position and record boundary points. Manual measurement works without permission. Walking pauses when the app leaves the foreground."))},confirmButton={TextButton(onClick={requestedAction=permission!!;permission=null;permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION))}){Text(T("Continue"))}},dismissButton={TextButton(onClick={permission=null}){Text(T("Cancel"))}})
-    if(exportDialog)AlertDialog(onDismissRequest={exportDialog=false},title={Text(T("Export"))},text={Column{
-        Text(T(if(exportAll)"All active measurements" else "Current measurement"))
+    if(permission!=null)AlertDialog(onDismissRequest={permission=null},title={Text(tr("Location permission"))},text={Text(tr("GPS is used to show your position and record boundary points. Manual measurement works without permission. Walking pauses when the app leaves the foreground."))},confirmButton={TextButton(onClick={requestedAction=permission!!;permission=null;permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION))}){Text(tr("Continue"))}},dismissButton={TextButton(onClick={permission=null}){Text(tr("Cancel"))}})
+    if(exportDialog)AlertDialog(onDismissRequest={exportDialog=false},title={Text(tr("Export"))},text={Column{
+        Text(tr(if(exportAll)"All active measurements" else "Current measurement"))
         listOf("geojson","kml","kmz","gpx","csv").forEach {v->Row(verticalAlignment=Alignment.CenterVertically){RadioButton(selected=format==v,onClick={format=v});Text(v.uppercase())}}
-    }},confirmButton={TextButton(onClick={exportDialog=false;exportLauncher.launch("TerraParcel.$format")}){Text(T("Save file"))}},dismissButton={TextButton(onClick={exportDialog=false;vm.share(format,exportAll){shareFile(context,it)}}){Text(T("Share"))}})
-    if(restoreWarning)AlertDialog(onDismissRequest={restoreWarning=false},title={Text(T("Restore backup"))},text={Text(T("Matching parcel IDs will be updated. Other measurements are kept. Export a backup first if needed."))},confirmButton={TextButton(onClick={restoreWarning=false;restoreLauncher.launch(arrayOf("application/zip","application/octet-stream"))}){Text(T("Continue"))}},dismissButton={TextButton(onClick={restoreWarning=false}){Text(T("Cancel"))}})
-    deleteForever?.let {p->AlertDialog(onDismissRequest={deleteForever=null},title={Text(T("Delete permanently"))},text={Text(p.name)},confirmButton={TextButton(onClick={vm.permanentDelete(p);deleteForever=null}){Text(T("Delete"))}},dismissButton={TextButton(onClick={deleteForever=null}){Text(T("Cancel"))}})}
+    }},confirmButton={TextButton(onClick={exportDialog=false;exportLauncher.launch("TerraParcel.$format")}){Text(tr("Save file"))}},dismissButton={TextButton(onClick={exportDialog=false;vm.share(format,exportAll){shareFile(context,it)}}){Text(tr("Share"))}})
+    if(restoreWarning)AlertDialog(onDismissRequest={restoreWarning=false},title={Text(tr("Restore backup"))},text={Text(tr("Matching parcel IDs will be updated. Other measurements are kept. Export a backup first if needed."))},confirmButton={TextButton(onClick={restoreWarning=false;restoreLauncher.launch(arrayOf("application/zip","application/octet-stream"))}){Text(tr("Continue"))}},dismissButton={TextButton(onClick={restoreWarning=false}){Text(tr("Cancel"))}})
+    deleteForever?.let {p->AlertDialog(onDismissRequest={deleteForever=null},title={Text(tr("Delete permanently"))},text={Text(p.name)},confirmButton={TextButton(onClick={vm.permanentDelete(p);deleteForever=null}){Text(tr("Delete"))}},dismissButton={TextButton(onClick={deleteForever=null}){Text(tr("Cancel"))}})}
 }
 fun coordinateText(p:Vertex)= "WGS84: ${p.lat}, ${p.lon}\nUTM: "+runCatching{Geo.utm(p).toString()}.getOrDefault("Outside UTM range")+"\nElevation: "+(p.altitude?.let{number(it)+" m"}?:"—")+"\nGPS accuracy: "+(p.accuracy?.let{"±$it m"}?:"—")
 private fun shareFile(c:Context,f:File){
@@ -280,7 +280,7 @@ private fun navigate(c:Context,p:Parcel,vm:LandViewModel){
         Column(Modifier.weight(1f)){
             Text(p.name,style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold)
             Text(if(p.shape==Shape.POLYGON.name)number(Geo.area(p.area,prefs.areaUnit))+" "+prefs.areaUnit else number(Geo.length(p.perimeter,prefs.lengthUnit))+" "+prefs.lengthUnit)
-            Text(T("Perimeter")+": "+number(Geo.length(p.perimeter,prefs.lengthUnit))+" "+prefs.lengthUnit+" · "+p.category,style=MaterialTheme.typography.bodySmall)
+            Text(tr("Perimeter")+": "+number(Geo.length(p.perimeter,prefs.lengthUnit))+" "+prefs.lengthUnit+" · "+p.category,style=MaterialTheme.typography.bodySmall)
             Text(java.text.DateFormat.getDateTimeInstance().format(java.util.Date(p.modified)),style=MaterialTheme.typography.labelSmall)
         }
         TextButton(onClick=favorite){Text(if(p.favorite)"★" else "☆")}
@@ -292,15 +292,15 @@ private fun navigate(c:Context,p:Parcel,vm:LandViewModel){
     var owner by remember {mutableStateOf(d.owner)}
     var category by remember {mutableStateOf(d.category)}
     var color by remember {mutableStateOf(d.color)}
-    AlertDialog(onDismissRequest=dismiss,title={Text(T("Save parcel"))},text={Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)){
-        OutlinedTextField(name,{name=it},label={Text(T("Name"))},singleLine=true)
-        OutlinedTextField(notes,{notes=it},label={Text(T("Notes"))})
-        OutlinedTextField(owner,{owner=it},label={Text(T("Owner"))},singleLine=true)
-        OutlinedTextField(category,{category=it},label={Text(T("Category"))},singleLine=true)
+    AlertDialog(onDismissRequest=dismiss,title={Text(tr("Save parcel"))},text={Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)){
+        OutlinedTextField(name,{name=it},label={Text(tr("Name"))},singleLine=true)
+        OutlinedTextField(notes,{notes=it},label={Text(tr("Notes"))})
+        OutlinedTextField(owner,{owner=it},label={Text(tr("Owner"))},singleLine=true)
+        OutlinedTextField(category,{category=it},label={Text(tr("Category"))},singleLine=true)
         Strip {listOf("Farm","Field","Property","House","Construction","Forest").forEach {c->Action(c){category=c}}}
         Strip {listOf("#167B62","#2F6FC0","#CB7331","#8C56A7","#D04F60").forEach {c->Box(Modifier.size(44.dp).background(Color(android.graphics.Color.parseColor(c)),RoundedCornerShape(12.dp)).clickable {color=c},contentAlignment=Alignment.Center){if(color==c)Text("✓",color=Color.White)}}}
-        Text(T("Phone measurements are estimates, not official cadastral or legal boundaries."),style=MaterialTheme.typography.bodySmall)
-    }},confirmButton={TextButton(onClick={save(d.copy(name=name,notes=notes,owner=owner,category=category.ifBlank{"Property"},color=color))},enabled=name.isNotBlank()){Text(T("Save"))}},dismissButton={TextButton(onClick=dismiss){Text(T("Cancel"))}})
+        Text(tr("Phone measurements are estimates, not official cadastral or legal boundaries."),style=MaterialTheme.typography.bodySmall)
+    }},confirmButton={TextButton(onClick={save(d.copy(name=name,notes=notes,owner=owner,category=category.ifBlank{"Property"},color=color))},enabled=name.isNotBlank()){Text(tr("Save"))}},dismissButton={TextButton(onClick=dismiss){Text(tr("Cancel"))}})
 }
 @Composable private fun CoordinateEdit(p:Vertex,done:(Vertex)->Unit){
     var lat by remember {mutableStateOf(p.lat.toString())};var lon by remember {mutableStateOf(p.lon.toString())}
@@ -311,42 +311,42 @@ private fun navigate(c:Context,p:Parcel,vm:LandViewModel){
     Action("Apply"){runCatching {Vertex(lat.trim().toDouble(),lon.trim().toDouble())}.onSuccess(done).onFailure {error=it.message}}
 }
 @Composable private fun CoordinateDialog(dismiss:()->Unit,go:(Vertex)->Unit){
-    AlertDialog(onDismissRequest=dismiss,title={Text(T("Go to coordinates"))},text={Column{Text("WGS84 · decimal degrees");CoordinateEdit(Vertex(41.3275,19.8187),go)}},confirmButton={TextButton(onClick=dismiss){Text(T("Cancel"))}})
+    AlertDialog(onDismissRequest=dismiss,title={Text(tr("Go to coordinates"))},text={Column{Text("WGS84 · decimal degrees");CoordinateEdit(Vertex(41.3275,19.8187),go)}},confirmButton={TextButton(onClick=dismiss){Text(tr("Cancel"))}})
 }
 @Composable private fun SettingsPanel(p:Preferences,change:(Preferences)->Unit,backup:()->Unit,restore:()->Unit,export:()->Unit,gps:()->Unit){
     var tile by remember(p.customTiles){mutableStateOf(p.customTiles)}
     var attribution by remember(p.attribution){mutableStateOf(p.attribution)}
     var layer by remember(p.layer){mutableStateOf(if(p.layer=="OpenStreetMap")"Custom" else p.layer)}
     Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)){
-        Text(T("Settings"),style=MaterialTheme.typography.headlineMedium)
+        Text(tr("Settings"),style=MaterialTheme.typography.headlineMedium)
         Strip {Action("English"){change(p.copy(language="en"))};Action("Shqip"){change(p.copy(language="sq"))}}
-        Text(T("Theme"));Strip {listOf("auto","light","dark").forEach {s->Action(s){change(p.copy(theme=s))}}}
-        Text(T("Area units"));Strip {listOf("m²","ha","ac","km²").forEach {u->FilterChip(p.areaUnit==u,{change(p.copy(areaUnit=u))},label={Text(u)})}}
-        Text(T("Distance units"));Strip {listOf("m","km","ft","mi").forEach {u->FilterChip(p.lengthUnit==u,{change(p.copy(lengthUnit=u))},label={Text(u)})}}
-        Text(T("Only record point when accuracy")+ " ≤ ${p.maxAccuracy.roundToInt()} m")
+        Text(tr("Theme"));Strip {listOf("auto","light","dark").forEach {s->Action(s){change(p.copy(theme=s))}}}
+        Text(tr("Area units"));Strip {listOf("m²","ha","ac","km²").forEach {u->FilterChip(p.areaUnit==u,{change(p.copy(areaUnit=u))},label={Text(u)})}}
+        Text(tr("Distance units"));Strip {listOf("m","km","ft","mi").forEach {u->FilterChip(p.lengthUnit==u,{change(p.copy(lengthUnit=u))},label={Text(u)})}}
+        Text(tr("Only record point when accuracy")+ " ≤ ${p.maxAccuracy.roundToInt()} m")
         Slider(p.maxAccuracy,{change(p.copy(maxAccuracy=it.roundToInt().toFloat()))},valueRange=1f..100f,steps=98)
-        Text(T("Minimum point spacing")+": ${number(p.minSpacing.toDouble())} m")
+        Text(tr("Minimum point spacing")+": ${number(p.minSpacing.toDouble())} m")
         Slider(p.minSpacing,{change(p.copy(minSpacing=it))},valueRange=0.5f..20f)
-        Row(verticalAlignment=Alignment.CenterVertically){Switch(p.showSaved,{change(p.copy(showSaved=it))});Text(T("Show saved parcels"))}
+        Row(verticalAlignment=Alignment.CenterVertically){Switch(p.showSaved,{change(p.copy(showSaved=it))});Text(tr("Show saved parcels"))}
         HorizontalDivider()
-        Text(T("Map layers"),style=MaterialTheme.typography.titleLarge)
-        Text(T("Online maps send tile requests revealing the viewed area to the chosen provider. Parcel geometry and GPS history are not uploaded."))
-        Row(verticalAlignment=Alignment.CenterVertically){Switch(p.onlineMaps,{change(p.copy(onlineMaps=it))});Text(T("Enable online maps"))}
+        Text(tr("Map layers"),style=MaterialTheme.typography.titleLarge)
+        Text(tr("Online maps send tile requests revealing the viewed area to the chosen provider. Parcel geometry and GPS history are not uploaded."))
+        Row(verticalAlignment=Alignment.CenterVertically){Switch(p.onlineMaps,{change(p.copy(onlineMaps=it))});Text(tr("Enable online maps"))}
         Action("OpenStreetMap"){change(p.copy(layer="OpenStreetMap"))}
-        Text(T("Licensed custom raster / WMS / WMTS tiles"))
-        OutlinedTextField(layer,{layer=it},label={Text(T("Layer name"))},singleLine=true)
+        Text(tr("Licensed custom raster / WMS / WMTS tiles"))
+        OutlinedTextField(layer,{layer=it},label={Text(tr("Layer name"))},singleLine=true)
         OutlinedTextField(tile,{tile=it},label={Text("HTTPS tile URL")},supportingText={Text("{z}/{x}/{y} or {bbox-epsg-3857}")})
-        OutlinedTextField(attribution,{attribution=it},label={Text(T("Provider attribution"))})
+        OutlinedTextField(attribution,{attribution=it},label={Text(tr("Provider attribution"))})
         Action("Apply layer",tile.startsWith("https://") && attribution.isNotBlank() && (tile.contains("{z}") || tile.contains("{bbox-epsg-3857}"))){change(p.copy(layer=layer.ifBlank{"Custom"},customTiles=tile,attribution=attribution))}
-        Text(T("Use only services whose terms permit use. Cadastral layers are reference data, separate from your measurements."),style=MaterialTheme.typography.bodySmall)
+        Text(tr("Use only services whose terms permit use. Cadastral layers are reference data, separate from your measurements."),style=MaterialTheme.typography.bodySmall)
         HorizontalDivider()
         Action("GPS Tools",click=gps)
         Action("Export all",click=export)
         Action("Local backup",click=backup)
         Action("Restore backup",click=restore)
-        Text(T("Automatic backups keep the last three days on this device. Export a backup to protect against uninstall or device loss."))
-        Text(T("Future features"),style=MaterialTheme.typography.titleMedium)
-        Text(T("Downloadable map regions, MGRS, external Bluetooth GNSS/RTK, Shapefile, GeoPackage and a verified ASIG catalogue are not included in this version."))
+        Text(tr("Automatic backups keep the last three days on this device. Export a backup to protect against uninstall or device loss."))
+        Text(tr("Future features"),style=MaterialTheme.typography.titleMedium)
+        Text(tr("Downloadable map regions, MGRS, external Bluetooth GNSS/RTK, Shapefile, GeoPackage and a verified ASIG catalogue are not included in this version."))
         Text("TerraParcel 0.1.0 · WGS84\nMapLibre Native · GeographicLib\n© OpenStreetMap contributors")
     }
 }
@@ -354,23 +354,23 @@ private fun navigate(c:Context,p:Parcel,vm:LandViewModel){
 @Composable private fun PhotoGallery(vm:LandViewModel,id:String) {
     val photos by remember(id){vm.repo.dao.photosFor(id)}.collectAsState(initial=emptyList())
     LazyColumn(Modifier.fillMaxWidth().heightIn(max=600.dp),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
-        item {Text(T("Photos"),style=MaterialTheme.typography.titleLarge)}
-        if(photos.isEmpty())item {Text(T("No photos attached"))}
+        item {Text(tr("Photos"),style=MaterialTheme.typography.titleLarge)}
+        if(photos.isEmpty())item {Text(tr("No photos attached"))}
         items(photos,key={it.id}){p->
             var bitmap by remember(p.filename){mutableStateOf<android.graphics.Bitmap?>(null)}
             LaunchedEffect(p.filename){
                 bitmap=withContext(Dispatchers.IO){android.graphics.BitmapFactory.decodeFile(vm.photoFile(p).path,android.graphics.BitmapFactory.Options().apply{inSampleSize=4})}
             }
-            bitmap?.let {Image(it.asImageBitmap(),T("Photo"),Modifier.fillMaxWidth().height(220.dp))}
-            Text(java.text.DateFormat.getDateTimeInstance().format(java.util.Date(p.timestamp))+(p.pointId?.let{" · "+T("Point photo")}?:""))
+            bitmap?.let {Image(it.asImageBitmap(),tr("Photo"),Modifier.fillMaxWidth().height(220.dp))}
+            Text(java.text.DateFormat.getDateTimeInstance().format(java.util.Date(p.timestamp))+(p.pointId?.let{" · "+tr("Point photo")}?:""))
         }
     }
 }
 @Composable private fun ElevationProfile(d:Draft){
     Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
-        Text(T("Elevation profile"),style=MaterialTheme.typography.titleLarge)
+        Text(tr("Elevation profile"),style=MaterialTheme.typography.titleLarge)
         val points=d.points
-        if(points.size<2 || points.any{it.altitude==null})Text(T("Elevation is unavailable for some points. No elevation data is invented."))
+        if(points.size<2 || points.any{it.altitude==null})Text(tr("Elevation is unavailable for some points. No elevation data is invented."))
         else {
             val distances=mutableListOf(0.0)
             points.zipWithNext().forEach{(a,b)->distances+=distances.last()+Geo.distance(a,b)}
@@ -386,7 +386,7 @@ private fun navigate(c:Context,p:Parcel,vm:LandViewModel){
                 drawPath(path,color,style=androidx.compose.ui.graphics.drawscope.Stroke(width=4f))
             }
             Text("${number(min)}–${number(max)} m · ${number(distances.last())} m")
-            Text(T("Elevation is the recorded receiver altitude; no terrain service is queried."))
+            Text(tr("Elevation is the recorded receiver altitude; no terrain service is queried."))
         }
     }
 }
