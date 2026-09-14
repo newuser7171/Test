@@ -41,9 +41,13 @@ class RasterMapProvider:MapProvider {
     }
 }
 class MapHandle {
+    private var pending:List<Vertex> = emptyList()
+    var position:CameraPosition?=null
     var map:MapLibreMap?=null
+        set(value){field=value;if(value!=null && pending.isNotEmpty())go(pending)}
     fun center():Vertex?=map?.cameraPosition?.target?.let { Vertex(it.latitude,it.longitude) }
     fun go(points:List<Vertex>){
+        pending=points
         val m=map?:return
         if(points.isEmpty())return
         if(points.size==1)m.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(points[0].lat,points[0].lon),18.0))
@@ -86,12 +90,12 @@ fun ParcelMap(modifier:Modifier,draft:Draft,parcels:List<Parcel>,prefs:Preferenc
         owner.lifecycle.addObserver(observer)
         if(owner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))view.onStart()
         if(owner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))view.onResume()
-        onDispose { owner.lifecycle.removeObserver(observer);view.onPause();view.onStop();view.onDestroy();handle.map=null }
+        onDispose { owner.lifecycle.removeObserver(observer);view.onPause();view.onStop();handle.position=handle.map?.cameraPosition;view.onDestroy();handle.map=null }
     }
     AndroidView(modifier=modifier,factory={
         view.getMapAsync { m->
+            m.cameraPosition=handle.position?:CameraPosition.Builder().target(LatLng(41.3275,19.8187)).zoom(15.0).build()
             handle.map=m;loaded=m
-            m.cameraPosition=CameraPosition.Builder().target(LatLng(41.3275,19.8187)).zoom(15.0).build()
             m.uiSettings.isCompassEnabled=true
             m.addOnMapLongClickListener { p->add(Vertex(p.latitude,p.longitude));true }
             m.addOnMapClickListener { p->

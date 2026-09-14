@@ -87,10 +87,14 @@ object Exchange {
     private fun readXml(bytes:ByteArray):List<Draft> {
         val factory=DocumentBuilderFactory.newInstance()
         factory.isNamespaceAware=true
-        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl",true)
-        factory.setFeature("http://xml.org/sax/features/external-general-entities",false)
-        factory.setFeature("http://xml.org/sax/features/external-parameter-entities",false)
-        val doc=factory.newDocumentBuilder().parse(ByteArrayInputStream(bytes))
+        // Android's DOM factory does not support all desktop Xerces feature flags.
+        // Parse a strictly decoded character stream and reject DTDs before parsing.
+        val xml=Charsets.UTF_8.newDecoder().decode(java.nio.ByteBuffer.wrap(bytes)).toString()
+        require(!xml.contains("<!DOCTYPE",ignoreCase=true) && !xml.contains("<!ENTITY",ignoreCase=true)){"DTD and entity declarations are not permitted"}
+        factory.isExpandEntityReferences=false
+        val builder=factory.newDocumentBuilder()
+        builder.setEntityResolver { _,_->throw org.xml.sax.SAXException("External entities are not permitted") }
+        val doc=builder.parse(org.xml.sax.InputSource(StringReader(xml)))
         fun nodes(e:Element,tag:String):List<Element> = e.getElementsByTagNameNS("*",tag).let { n->(0 until n.length).map { n.item(it) as Element } }
         fun text(e:Element,tag:String)=nodes(e,tag).firstOrNull()?.textContent.orEmpty()
         val root=doc.documentElement

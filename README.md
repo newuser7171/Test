@@ -3,14 +3,13 @@
 Original Kotlin / Jetpack Compose app for measuring and saving points, lines and parcels. No WebView, account, ads, analytics or coordinate-upload service.
 
 ## Build and APK
-JDK 17, Android SDK 35, Gradle 8.9. Open this folder in Android Studio and use a local Gradle 8.9 installation, or run:
+JDK 17, Android SDK 35, Gradle 8.9. Open this folder in Android Studio (JDK 17), or run:
 
 ```sh
-gradle wrapper --gradle-version 8.9
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 ```
 
-Windows: use `gradlew.bat` after generating the wrapper. The wrapper binary is not committed in this initial source release; CI installs the pinned Gradle version.
+Windows: use `gradlew.bat`. The official Gradle 8.9 wrapper is included, with a pinned distribution checksum.
 
 APK: `app/build/outputs/apk/debug/app-debug.apk`.
 GitHub Actions builds and tests each push / PR and uploads **TerraParcel-debug-and-reports**. Download its ZIP, extract the APK and install on Android 8.0+. Enable installation from the app used to open it. The debug APK is for evaluation, not a production-signed release.

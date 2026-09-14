@@ -49,7 +49,7 @@ val LocalLanguage=staticCompositionLocalOf { "en" }
     val resources=remember(context,language){
         context.createConfigurationContext(Configuration(context.resources.configuration).apply {setLocales(LocaleList(Locale.forLanguageTag(language)))}).resources
     }
-    val id=resources.getIdentifier(s.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]+"),"_").trim('_'),"string",context.packageName)
+    val id=resources.getIdentifier("ui_"+s.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]+"),"_").trim('_'),"string",context.packageName)
     return if(id!=0)resources.getString(id)else s
 }
 fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
