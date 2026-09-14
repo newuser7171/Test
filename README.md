@@ -46,7 +46,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/STATUS.md](docs/STATU
 - Single-ring polygons only: holes / multi-geometries are rejected, never flattened silently.
 - GPS walking is foreground only and deliberately pauses in background. No background / notification permission.
 - Online layers require network and appropriate provider licensing. Offline regions are not downloaded in this version.
-- Snapshots contain the map renderer, not Compose measurement panels; verify attribution when sharing.
+- Snapshots contain the map renderer and embedded provider attribution, not Compose measurement panels.
 - Photos are copied privately; EXIF location is not read. Uninstall removes local data. Export a backup externally.
 - English fallback remains for technical diagnostics.
 - Imported GPX tracks are separate lines unless explicitly marked POLYGON. CSV without shape defaults to polygon for multiple coordinates.

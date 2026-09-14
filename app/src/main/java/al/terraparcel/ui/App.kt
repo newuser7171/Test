@@ -146,7 +146,7 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                         val previewHandle=remember {MapHandle()}
                         ParcelMap(Modifier.fillMaxSize(),Draft(),active,prefs,null,null,previewHandle,{},{},{_,_->},{})
                         LaunchedEffect(active){kotlinx.coroutines.delay(600);previewHandle.go(active.flatMap {it.draft().points})}
-                        FilledTonalButton(onClick={page="Map"},modifier=Modifier.align(Alignment.BottomEnd).padding(8.dp)){Text(T("Open map"))}
+                        FilledTonalButton(onClick={page="Map"},modifier=Modifier.align(Alignment.TopEnd).padding(8.dp)){Text(T("Open map"))}
                     }
                     Strip {Action("Measure Area"){vm.new(Shape.POLYGON);page="Map"};Action("Import"){importLauncher.launch(arrayOf("*/*"))};Action("Export"){exportAll=true;exportDialog=true}}
                     Text(T("Recent Measurements"),style=MaterialTheme.typography.titleMedium)
@@ -222,7 +222,7 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                                 Action("Elevation profile"){showProfile=true}
                                 Action("Screenshot"){handle.map?.snapshot { bitmap->
                                     vm.task {
-                                        val file=withContext(Dispatchers.IO){File(context.cacheDir,"exports").apply{mkdirs()}.let {dir->File(dir,"map.png").apply {outputStream().use {bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)}}}}
+                                        val file=withContext(Dispatchers.IO){File(context.cacheDir,"exports").apply{mkdirs()}.let {dir->File(dir,"map.png").apply {outputStream().use {attributedSnapshot(bitmap,prefs).compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)}}}}
                                         shareFile(context,file)
                                     }
                                 }}

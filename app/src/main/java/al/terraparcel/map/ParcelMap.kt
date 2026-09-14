@@ -4,6 +4,11 @@ import android.annotation.SuppressLint
 import android.graphics.PointF
 import android.view.MotionEvent
 import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -92,7 +97,8 @@ fun ParcelMap(modifier:Modifier,draft:Draft,parcels:List<Parcel>,prefs:Preferenc
         if(owner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))view.onResume()
         onDispose { owner.lifecycle.removeObserver(observer);view.onPause();view.onStop();handle.position=handle.map?.cameraPosition;view.onDestroy();handle.map=null }
     }
-    AndroidView(modifier=modifier,factory={
+    Box(modifier=modifier) {
+    AndroidView(modifier=Modifier.matchParentSize(),factory={
         view.getMapAsync { m->
             m.cameraPosition=handle.position?:CameraPosition.Builder().target(LatLng(41.3275,19.8187)).zoom(15.0).build()
             handle.map=m;loaded=m
@@ -139,6 +145,10 @@ fun ParcelMap(modifier:Modifier,draft:Draft,parcels:List<Parcel>,prefs:Preferenc
             }
         };view
     })
+    if(prefs.onlineMaps) Surface(Modifier.align(Alignment.BottomEnd).padding(4.dp).widthIn(max=220.dp)) {
+        Text(mapAttribution(prefs),modifier=Modifier.padding(4.dp),style=androidx.compose.material3.MaterialTheme.typography.labelSmall)
+    }
+    }
     LaunchedEffect(loaded,styleJson){
         loaded?.setStyle(Style.Builder().fromJson(styleJson)){ style->
             style.addSource(GeoJsonSource("measurements"))
@@ -149,4 +159,19 @@ fun ParcelMap(modifier:Modifier,draft:Draft,parcels:List<Parcel>,prefs:Preferenc
         }
     }
     LaunchedEffect(loaded,draft,parcels,fix,selected){loaded?.let {render(it,draft,parcels,fix,selected)}}
+}
+
+fun mapAttribution(p:Preferences):String = if(p.layer!="OpenStreetMap" && p.customTiles.isNotBlank())p.attribution else "© OpenStreetMap contributors"
+
+/** Embed attribution in the exported pixels; Compose overlays are not part of MapLibre snapshots. */
+fun attributedSnapshot(bitmap:android.graphics.Bitmap,p:Preferences):android.graphics.Bitmap {
+    val copy=requireNotNull(bitmap.copy(android.graphics.Bitmap.Config.ARGB_8888,true))
+    val canvas=android.graphics.Canvas(copy)
+    val paint=android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {color=android.graphics.Color.BLACK;textSize=(bitmap.width/40f).coerceIn(12f,28f)}
+    val text=if(p.onlineMaps)mapAttribution(p) else "TerraParcel · WGS84"
+    val layout=android.text.StaticLayout.Builder.obtain(text,0,text.length,paint,(bitmap.width-24).coerceAtLeast(1)).build()
+    val y=(bitmap.height-layout.height-16).coerceAtLeast(0).toFloat()
+    canvas.drawRect(0f,y,bitmap.width.toFloat(),bitmap.height.toFloat(),android.graphics.Paint().apply{color=android.graphics.Color.argb(235,255,255,255)})
+    canvas.save();canvas.translate(12f,y+8);layout.draw(canvas);canvas.restore()
+    return copy
 }
