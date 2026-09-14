@@ -85,8 +85,8 @@ class LandViewModel(app:Application):AndroidViewModel(app) {
         location.start({ f->
             fix.value=f
             if(walking.value && !paused.value) {
-                val a=f.point.accuracy
-                if(a==null || a>prefs.value.maxAccuracy) message.value="GPS accuracy ${a?.let{"±$it m"}?:"unknown"}: point rejected"
+                val rejection=RecordingPolicy.rejection(f.point,f.elapsedNanos,SystemClock.elapsedRealtimeNanos(),prefs.value.maxAccuracy)
+                if(rejection!=null) message.value=rejection
                 else if(f.elapsedNanos>lastFixNanos && (draft.value.points.lastOrNull()?.let { Geo.distance(it,f.point)>=prefs.value.minSpacing }!=false)) {
                     lastFixNanos=f.elapsedNanos;add(f.point)
                 }
@@ -100,8 +100,8 @@ class LandViewModel(app:Application):AndroidViewModel(app) {
     fun resumeLocation() { /* Restarted after explicit location action; no background location permission. */ }
     fun useFix() {
         val f=fix.value?:return run { message.value="Waiting for GPS" }
-        if(SystemClock.elapsedRealtimeNanos()-f.elapsedNanos>15_000_000_000L){message.value="GPS fix is stale";return}
-        if(f.point.accuracy==null || f.point.accuracy>prefs.value.maxAccuracy){message.value="Accuracy above threshold; point rejected";return}
+        val rejection=RecordingPolicy.rejection(f.point,f.elapsedNanos,SystemClock.elapsedRealtimeNanos(),prefs.value.maxAccuracy)
+        if(rejection!=null){message.value=rejection;return}
         add(f.point)
     }
     fun save(d:Draft,onSaved:()->Unit={})=task {

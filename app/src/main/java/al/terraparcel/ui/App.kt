@@ -49,7 +49,7 @@ val LocalLanguage=staticCompositionLocalOf { "en" }
     val resources=remember(context,language){
         context.createConfigurationContext(Configuration(context.resources.configuration).apply {setLocales(LocaleList(Locale.forLanguageTag(language)))}).resources
     }
-    val id=resources.getIdentifier("ui_"+s.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]+"),"_").trim('_'),"string",context.packageName)
+    val id=localizedLabels[s.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]+"),"_").trim('_')]?:0
     return if(id!=0)resources.getString(id)else s
 }
 fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
@@ -324,7 +324,7 @@ private fun navigate(c:Context,p:Parcel,vm:LandViewModel){
         Text(T("Area units"));Strip {listOf("m²","ha","ac","km²").forEach {u->FilterChip(p.areaUnit==u,{change(p.copy(areaUnit=u))},label={Text(u)})}}
         Text(T("Distance units"));Strip {listOf("m","km","ft","mi").forEach {u->FilterChip(p.lengthUnit==u,{change(p.copy(lengthUnit=u))},label={Text(u)})}}
         Text(T("Only record point when accuracy")+ " ≤ ${p.maxAccuracy.roundToInt()} m")
-        Slider(p.maxAccuracy,{change(p.copy(maxAccuracy=it.roundToInt().toFloat()))},valueRange=1f..30f,steps=28)
+        Slider(p.maxAccuracy,{change(p.copy(maxAccuracy=it.roundToInt().toFloat()))},valueRange=1f..100f,steps=98)
         Text(T("Minimum point spacing")+": ${number(p.minSpacing.toDouble())} m")
         Slider(p.minSpacing,{change(p.copy(minSpacing=it))},valueRange=0.5f..20f)
         Row(verticalAlignment=Alignment.CenterVertically){Switch(p.showSaved,{change(p.copy(showSaved=it))});Text(T("Show saved parcels"))}
@@ -357,8 +357,9 @@ private fun navigate(c:Context,p:Parcel,vm:LandViewModel){
         item {Text(T("Photos"),style=MaterialTheme.typography.titleLarge)}
         if(photos.isEmpty())item {Text(T("No photos attached"))}
         items(photos,key={it.id}){p->
-            val bitmap by produceState<android.graphics.Bitmap?>(null,p.filename){
-                value=withContext(Dispatchers.IO){android.graphics.BitmapFactory.decodeFile(vm.photoFile(p).path,android.graphics.BitmapFactory.Options().apply{inSampleSize=4})}
+            var bitmap by remember(p.filename){mutableStateOf<android.graphics.Bitmap?>(null)}
+            LaunchedEffect(p.filename){
+                bitmap=withContext(Dispatchers.IO){android.graphics.BitmapFactory.decodeFile(vm.photoFile(p).path,android.graphics.BitmapFactory.Options().apply{inSampleSize=4})}
             }
             bitmap?.let {Image(it.asImageBitmap(),T("Photo"),Modifier.fillMaxWidth().height(220.dp))}
             Text(java.text.DateFormat.getDateTimeInstance().format(java.util.Date(p.timestamp))+(p.pointId?.let{" · "+T("Point photo")}?:""))

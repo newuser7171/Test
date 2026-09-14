@@ -30,5 +30,12 @@ data class Preferences(
     val onlineMaps: Boolean = false, val layer: String = "OpenStreetMap",
     val customTiles: String = "", val attribution: String = "",
     val showSaved: Boolean = true
-)
+) {
+    init {
+        require(language in listOf("en","sq") && theme in listOf("auto","light","dark")){"Unsupported language or theme"}
+        require(areaUnit in listOf("m²","ha","ac","km²") && lengthUnit in listOf("m","km","ft","mi")){"Unsupported units"}
+        require(maxAccuracy.isFinite() && maxAccuracy in 1f..100f && minSpacing.isFinite() && minSpacing in 0.5f..100f){"Invalid GPS recording settings"}
+        require(customTiles.isEmpty() || customTiles.startsWith("https://")){"Map URLs must use HTTPS"}
+    }
+}
 val codec = Json { ignoreUnknownKeys = true; encodeDefaults = true }

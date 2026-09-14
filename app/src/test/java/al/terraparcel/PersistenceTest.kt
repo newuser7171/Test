@@ -54,6 +54,9 @@ class PersistenceTest {
     @Test(expected=IllegalArgumentException::class) fun rejectHole(){
         Exchange.read("""{"type":"Polygon","coordinates":[[[19,40],[20,40],[20,41],[19,40]],[[19.1,40.1],[19.2,40.1],[19.2,40.2],[19.1,40.1]]]}""".toByteArray())
     }
+    @Test(expected=IllegalArgumentException::class) fun rejectExternalEntities(){
+        Exchange.read("""<?xml version="1.0"?><!DOCTYPE kml [<!ENTITY external SYSTEM "file:///etc/passwd">]><kml>&external;</kml>""".toByteArray())
+    }
     @Test fun csvMultilineName(){
         val d=Draft(name="Line\nTwo",shape=Shape.POINT,points=listOf(Vertex(40.0,19.0)))
         assertEquals(d.name,Exchange.read(Exchange.export(listOf(d),"csv")).single().name)
