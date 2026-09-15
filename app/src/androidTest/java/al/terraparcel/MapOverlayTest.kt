@@ -51,13 +51,13 @@ class MapOverlayTest {
         val points = listOf(Vertex(41.3273,19.8183),Vertex(41.3277,19.8183),
             Vertex(41.3277,19.8191),Vertex(41.3273,19.8191))
         fun visible(layer: String, minimum: Int) {
-            compose.waitUntil(20_000) {
+            try { compose.waitUntil(20_000) {
                 var count = 0
                 compose.runOnIdle {
                     count = map!!.queryRenderedFeatures(RectF(0f,0f,view.width.toFloat(),view.height.toFloat()),layer).size
                 }
                 count >= minimum
-            }
+            } } catch (e: Exception) { throw AssertionError("Expected at least $minimum rendered features in $layer", e) }
         }
         // A line's very first vertex must be visible before a second point exists.
         compose.runOnIdle { vm.add(points[0]) }
@@ -74,5 +74,16 @@ class MapOverlayTest {
         visible("vertices",4)
         visible("areas",1)
         compose.runOnIdle { assertTrue(vm.draft.value.points.size == 4) }
+        // Move the measurement to Fier, well outside the initial Tirana viewport.
+        compose.runOnIdle {
+            vm.edit(vm.draft.value.copy(points=points.map { it.copy(lat=it.lat-0.6,lon=it.lon-0.27) }))
+        }
+        compose.onNodeWithText("Fit measurement").performClick()
+        visible("vertices",4)
+        visible("areas",1)
+        compose.runOnIdle { vm.deletePoint(3) }
+        visible("vertices",3)
+        compose.runOnIdle { vm.undo() }
+        visible("vertices",4)
     }
 }

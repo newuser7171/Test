@@ -119,4 +119,5 @@
     <string name="ui_elevation_is_the_recorded_receiver_altitude_no_terrain_service_is_queried">Elevation is the recorded receiver altitude; no terrain service is queried.</string>
     <string name="ui_satellite">Satellite</string>
     <string name="ui_terrain">Terrain</string>
+    <string name="ui_fit_measurement">Fit measurement</string>
 </resources>

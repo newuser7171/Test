@@ -55,7 +55,7 @@ class MapHandle {
         pending=points
         val m=map?:return
         if(points.isEmpty())return
-        if(points.size==1)m.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(points[0].lat,points[0].lon),18.0))
+        if(points.map { it.lat to it.lon }.distinct().size==1)m.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(points[0].lat,points[0].lon),18.0))
         else m.animateCamera(CameraUpdateFactory.newLatLngBounds(LatLngBounds.Builder().includes(points.map{LatLng(it.lat,it.lon)}).build(),80))
     }
 }
@@ -64,7 +64,12 @@ private fun render(m:MapLibreMap,d:Draft,saved:List<Parcel>,fix:Fix?,selected:In
     fun feature(g:JSONObject,color:String)=JSONObject().put("type","Feature").put("geometry",g).put("properties",JSONObject().put("color",color))
     saved.forEach { p->runCatching {features.put(feature(Exchange.geometry(p.draft()),p.color))} }
     if(d.points.isNotEmpty()){
-        val shape=if(d.shape==Shape.POLYGON && d.points.size<3) if(d.points.size==1)Shape.POINT else Shape.LINE else d.shape
+        // In-progress lines and polygons need valid GeoJSON even with only one vertex.
+        val shape=when {
+            d.points.size==1 -> Shape.POINT
+            d.shape==Shape.POLYGON && d.points.size<3 -> Shape.LINE
+            else -> d.shape
+        }
         features.put(feature(Exchange.geometry(d.copy(shape=shape)),d.color))
         d.points.forEachIndexed { i,p->features.put(feature(Exchange.geometry(Draft(shape=Shape.POINT,points=listOf(p))),if(i==selected)"#F09132" else "#173D36")) }
     }
@@ -83,6 +88,7 @@ fun ParcelMap(modifier:Modifier,draft:Draft,parcels:List<Parcel>,prefs:Preferenc
     val add by rememberUpdatedState(onAdd);val select by rememberUpdatedState(onSelect);val move by rememberUpdatedState(onMove)
     val camera by rememberUpdatedState(onCamera)
     var loaded by remember { mutableStateOf<MapLibreMap?>(null) }
+    var initialCameraPending by remember { mutableStateOf(true) }
     val styleJson=remember(prefs.onlineMaps,prefs.layer,prefs.customTiles,prefs.attribution){RasterMapProvider().style(prefs)}
     DisposableEffect(view,owner){
         val observer=LifecycleEventObserver { _,event->when(event){
@@ -153,9 +159,15 @@ fun ParcelMap(modifier:Modifier,draft:Draft,parcels:List<Parcel>,prefs:Preferenc
         loaded?.setStyle(Style.Builder().fromJson(styleJson)){ style->
             style.addSource(GeoJsonSource("measurements"))
             style.addLayer(FillLayer("areas","measurements").withFilter(eq(geometryType(),literal("Polygon"))).withProperties(fillColor(get("color")),fillOpacity(0.22f)))
-            style.addLayer(LineLayer("edges","measurements").withFilter(neq(geometryType(),literal("Point"))).withProperties(lineColor(get("color")),lineWidth(3f)))
-            style.addLayer(CircleLayer("vertices","measurements").withFilter(eq(geometryType(),literal("Point"))).withProperties(circleColor(get("color")),circleRadius(7f),circleStrokeColor("#FFFFFF"),circleStrokeWidth(2f)))
+            style.addLayer(LineLayer("edge-halo","measurements").withFilter(neq(geometryType(),literal("Point"))).withProperties(lineColor("#FFFFFF"),lineWidth(7f)))
+            style.addLayer(LineLayer("edges","measurements").withFilter(neq(geometryType(),literal("Point"))).withProperties(lineColor(get("color")),lineWidth(4f)))
+            style.addLayer(CircleLayer("vertices","measurements").withFilter(eq(geometryType(),literal("Point"))).withProperties(circleColor(get("color")),circleRadius(8f),circleStrokeColor("#FFFFFF"),circleStrokeWidth(3f)))
             loaded?.let {render(it,currentDraft,currentSaved,currentFix,currentSelected)}
+            if(initialCameraPending) {
+                initialCameraPending=false
+                // A persisted draft may be far from the default Tirana camera after a cold launch.
+                if(handle.position==null && currentDraft.points.isNotEmpty())handle.go(currentDraft.points)
+            }
         }
     }
     LaunchedEffect(loaded,draft,parcels,fix,selected){loaded?.let {render(it,draft,parcels,fix,selected)}}

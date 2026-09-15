@@ -4,6 +4,7 @@ import al.terraparcel.R
 
 // Static references keep localization discoverable by Android resource tooling.
 internal val localizedLabels=mapOf(
+    "fit_measurement" to R.string.ui_fit_measurement,
     "home" to R.string.ui_home,
     "map" to R.string.ui_map,
     "my_parcels" to R.string.ui_my_parcels,

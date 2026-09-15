@@ -188,7 +188,7 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                     Text(tr("Accuracy labels are guidance only. Accuracy is reported by Android."))
                 }
                 "Map"->{
-                    Strip {Action("Layers"){page="Settings"};Action("Search"){page="My Parcels"};Action(if(fullScreen)"Exit full screen" else "Full screen"){fullScreen=!fullScreen};Action("GPS Tools"){fullScreen=false;page="GPS Tools"}}
+                    Strip {Action("Fit measurement",draft.points.isNotEmpty()){follow=false;handle.go(draft.points)};Action("Layers"){page="Settings"};Action("Search"){page="My Parcels"};Action(if(fullScreen)"Exit full screen" else "Full screen"){fullScreen=!fullScreen};Action("GPS Tools"){fullScreen=false;page="GPS Tools"}}
                     Box(Modifier.weight(1f).fillMaxWidth()){
                         ParcelMap(Modifier.fillMaxSize(),draft,if(prefs.showSaved)active.filter{it.id!=draft.id}else emptyList(),prefs,fix,selected,handle,{follow=false;vm.add(it)}, {vm.selected.value=it;showPoint=true},{i,p->follow=false;vm.move(i,p)},{scale=it})
                         Text("+",Modifier.align(Alignment.Center),color=Color(0xFF173D36),style=MaterialTheme.typography.headlineLarge)
@@ -347,7 +347,7 @@ private fun navigate(c:Context,p:Parcel,vm:LandViewModel){
         Text(tr("Automatic backups keep the last three days on this device. Export a backup to protect against uninstall or device loss."))
         Text(tr("Future features"),style=MaterialTheme.typography.titleMedium)
         Text(tr("Downloadable map regions, MGRS, external Bluetooth GNSS/RTK, Shapefile, GeoPackage and a verified ASIG catalogue are not included in this version."))
-        Text("TerraParcel 0.1.0 · WGS84\nMapLibre Native · GeographicLib\n© OpenStreetMap contributors")
+        Text("TerraParcel 0.1.2 · WGS84\nMapLibre Native · GeographicLib\n© OpenStreetMap contributors")
     }
 }
 
