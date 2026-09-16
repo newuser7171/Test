@@ -119,6 +119,7 @@
     <string name="ui_elevation_is_the_recorded_receiver_altitude_no_terrain_service_is_queried">Lartësia është ajo e regjistruar nga marrësi; nuk kërkohet shërbim terreni.</string>
     <string name="ui_satellite">Satelit</string>
     <string name="ui_terrain">Terren</string>
+    <string name="ui_fit_measurement">Shfaq matjen në hartë</string>
     <string name="ui_basemap">Harta bazë</string>
     <string name="ui_topographic">Topografike</string>
     <string name="ui_overlays">Shtresat mbivendosëse</string>

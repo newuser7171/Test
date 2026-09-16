@@ -339,6 +339,7 @@ private fun navigate(c:Context,p:Parcel,vm:LandViewModel){
         Text(tr("Automatic backups keep the last three days on this device. Export a backup to protect against uninstall or device loss."))
         Text(tr("Future features"),style=MaterialTheme.typography.titleMedium)
         Text(tr("Downloadable map regions, MGRS, external Bluetooth GNSS/RTK, Shapefile, GeoPackage and a verified ASIG catalogue are not included in this version."))
+        Text("TerraParcel 0.1.2 · WGS84\nMapLibre Native · GeographicLib\n© OpenStreetMap contributors")
         Text("TerraParcel 0.2.0 · WGS84\nMapLibre Native · GeographicLib\n© OpenStreetMap contributors")
     }
 }

@@ -14,6 +14,7 @@ class MainActivity:ComponentActivity() {
         org.maplibre.android.MapLibre.getInstance(applicationContext)
         org.maplibre.android.module.http.HttpRequestImpl.setOkHttpClient(
             okhttp3.OkHttpClient.Builder().addInterceptor { chain ->
+                chain.proceed(chain.request().newBuilder().header("User-Agent", "TerraParcel/0.1.1 (+https://github.com/newuser7171/Test)").build())
                 chain.proceed(chain.request().newBuilder().header("User-Agent", "TerraParcel/0.2.0 (+https://github.com/newuser7171/Test)").build())
             }.build()
         )

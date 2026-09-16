@@ -70,6 +70,7 @@ class MapOverlayTest {
         compose.runOnIdle { vm.edit(vm.draft.value.copy(shape=Shape.POLYGON)) }
         visible("areas",1)
         // Reload the style without network tiles; retained draft must reappear.
+        compose.runOnIdle { vm.settings(vm.prefs.value.copy(attribution="Reload test")) }
         compose.runOnIdle { vm.settings(vm.prefs.value.copy(onlineMaps=true,layer="Custom",customTiles="https://127.0.0.1/{z}/{x}/{y}.png",attribution="Reload test")) }
         visible("vertices",4)
         visible("areas",1)
