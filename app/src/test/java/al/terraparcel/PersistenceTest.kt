@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.encodeToString
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -28,6 +29,16 @@ class PersistenceTest {
         assertTrue(saved.area>0)
         db.dao().trash(d.id,123L);assertEquals(123L,db.dao().get(d.id)!!.deletedAt)
         db.dao().restore(d.id);assertNull(db.dao().get(d.id)!!.deletedAt)
+        db.close()
+    }
+    @Test fun layerSettingsSurviveDatabaseRestart()=runBlocking {
+        val settings=Preferences(onlineMaps=true,layer="Satellite",cadastreEnabled=true,cadastreOpacity=0.55f,
+            customTiles="https://example.org/{z}/{x}/{y}.png",attribution="Existing credit",
+            customOverlayEnabled=true,customOverlayTiles="https://example.org/wms?bbox={bbox-epsg-3857}",customOverlayAttribution="Overlay credit")
+        var db=open()
+        db.dao().setting(AppSettings("preferences",codec.encodeToString(settings)))
+        db.close();db=open()
+        assertEquals(settings,codec.decodeFromString<Preferences>(db.dao().setting("preferences")!!))
         db.close()
     }
     @Test fun exportImportRoundTrips() {
