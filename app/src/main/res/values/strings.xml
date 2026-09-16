@@ -119,4 +119,14 @@
     <string name="ui_elevation_is_the_recorded_receiver_altitude_no_terrain_service_is_queried">Elevation is the recorded receiver altitude; no terrain service is queried.</string>
     <string name="ui_satellite">Satellite</string>
     <string name="ui_terrain">Terrain</string>
+    <string name="ui_basemap">Basemap</string>
+    <string name="ui_topographic">Topographic</string>
+    <string name="ui_overlays">Overlays</string>
+    <string name="ui_albania_cadastre">Albania Cadastre</string>
+    <string name="ui_cadastre_opacity">Cadastre opacity</string>
+    <string name="ui_custom_basemap">Custom basemap</string>
+    <string name="ui_custom_overlay">Custom overlay</string>
+    <string name="ui_fit_measurement">Fit measurement</string>
+    <string name="ui_use_transparent_png_tiles_for_overlays">Use transparent PNG tiles for overlays.</string>
+    <string name="ui_cadastre_is_visible_at_parcel_scales_zoom_13_21_within_albania_missing_service_tiles_leave_the_basemap_visible">Cadastre is visible at parcel scales (zoom 13–21), within Albania. Missing service tiles leave the basemap visible.</string>
 </resources>

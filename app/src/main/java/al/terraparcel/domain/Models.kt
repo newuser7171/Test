@@ -29,13 +29,21 @@ data class Preferences(
     val maxAccuracy: Float = 5f, val minSpacing: Float = 2f,
     val onlineMaps: Boolean = false, val layer: String = "OpenStreetMap",
     val customTiles: String = "", val attribution: String = "",
-    val showSaved: Boolean = true
+    val showSaved: Boolean = true,
+    // Additive JSON defaults preserve existing settings and backups; Room schema is unchanged.
+    val cadastreEnabled: Boolean = false, val cadastreOpacity: Float = 1f,
+    val customLayerName: String = "",
+    val customOverlayEnabled: Boolean = false,
+    val customOverlayName: String = "Custom overlay",
+    val customOverlayTiles: String = "", val customOverlayAttribution: String = ""
 ) {
     init {
         require(language in listOf("en","sq") && theme in listOf("auto","light","dark")){"Unsupported language or theme"}
         require(areaUnit in listOf("m²","ha","ac","km²") && lengthUnit in listOf("m","km","ft","mi")){"Unsupported units"}
         require(maxAccuracy.isFinite() && maxAccuracy in 1f..100f && minSpacing.isFinite() && minSpacing in 0.5f..100f){"Invalid GPS recording settings"}
         require(customTiles.isEmpty() || customTiles.startsWith("https://")){"Map URLs must use HTTPS"}
+        require(customOverlayTiles.isEmpty() || customOverlayTiles.startsWith("https://")){"Map URLs must use HTTPS"}
+        require(cadastreOpacity.isFinite() && cadastreOpacity in 0f..1f){"Invalid overlay opacity"}
     }
 }
 val codec = Json { ignoreUnknownKeys = true; encodeDefaults = true }
