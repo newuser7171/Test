@@ -14,10 +14,10 @@ fun MapLayerSelector(p: Preferences, change: (Preferences) -> Unit) {
     Text(tr("Basemap"))
     Strip {
         MapLayers.PRESETS.forEach { layer ->
-            FilterChip(p.layer==layer,{change(p.copy(layer=layer))},label={Text(tr(layer))})
+            FilterChip(p.layer==layer,{change(MapLayers.selectBasemap(p,layer))},label={Text(tr(layer))})
         }
         if(p.customTiles.isNotBlank())FilterChip(p.layer !in MapLayers.PRESETS,
-            {change(p.copy(layer="Custom"))},label={Text(p.customLayerName.ifBlank {tr("Custom basemap")})})
+            {change(MapLayers.selectBasemap(p,"Custom"))},label={Text(p.customLayerName.ifBlank {if(p.layer !in MapLayers.PRESETS)p.layer else tr("Custom basemap")})})
     }
     Text(tr("Overlays"))
     Row(verticalAlignment=Alignment.CenterVertically) {

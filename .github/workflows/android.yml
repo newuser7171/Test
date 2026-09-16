@@ -79,7 +79,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
             ./gradlew :app:connectedDebugAndroidTest --stacktrace
-            adb pull /sdcard/Android/data/al.terraparcel/files/verification app/build/verification
+            adb pull /sdcard/Download/TerraParcel-verification app/build/verification
       - name: Device test details
         if: always()
         run: |

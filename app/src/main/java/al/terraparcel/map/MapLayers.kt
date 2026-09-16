@@ -12,6 +12,8 @@ object MapLayers {
     const val CADASTRE_CREDIT = "© ASIG / ASHK"
     const val CADASTRE = "https://geoportal.asig.gov.al/service/zrpp/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=p_kadas_albscad_072026&STYLES=&SRS=EPSG:900913&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256&FORMAT=image/png&TRANSPARENT=TRUE"
     val PRESETS = listOf("OpenStreetMap", "Satellite", "Topographic")
+    fun selectBasemap(p: Preferences, layer: String): Preferences = p.copy(layer=layer,
+        customLayerName=p.customLayerName.ifBlank { if(p.layer !in PRESETS)p.layer else "" })
     fun validTemplate(url: String) = url.startsWith("https://") &&
         (url.contains("{bbox-epsg-3857}") || listOf("{z}", "{x}", "{y}").all(url::contains))
 }

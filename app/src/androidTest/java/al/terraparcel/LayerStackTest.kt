@@ -10,6 +10,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import android.os.ParcelFileDescriptor
+import al.terraparcel.map.attributedSnapshot
 import al.terraparcel.domain.*
 import al.terraparcel.location.Fix
 import al.terraparcel.ui.LandViewModel
@@ -101,10 +104,13 @@ class LayerStackTest {
             val done=AtomicBoolean(false)
             compose.runOnIdle {map!!.snapshot { bitmap ->
                 val folder=File(compose.activity.getExternalFilesDir(null),"verification").apply{mkdirs()}
-                File(folder,name+".png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG,100,it) }
+                File(folder,name+".png").outputStream().use { attributedSnapshot(bitmap,vm.prefs.value).compress(Bitmap.CompressFormat.PNG,100,it) }
                 done.set(true)
             }}
             compose.waitUntil(20_000){done.get()}
+            // UTP uninstalls the target after testing; copy evidence outside its data directory first.
+            val command="mkdir -p /sdcard/Download/TerraParcel-verification && cp /sdcard/Android/data/al.terraparcel/files/verification/$name.png /sdcard/Download/TerraParcel-verification/$name.png"
+            ParcelFileDescriptor.AutoCloseInputStream(InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)).use { it.readBytes() }
         }
         assertStack();visible("areas",1);visible("edges",1);visible("vertices",4);snapshot("satellite-cadastre-measurement")
         compose.runOnIdle { vm.settings(vm.prefs.value.copy(cadastreEnabled=false)) }

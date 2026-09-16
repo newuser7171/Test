@@ -40,6 +40,7 @@ class MapLayersTest {
         val old="""{"layer":"My WMS","customTiles":"https://example.org/wms?bbox={bbox-epsg-3857}","attribution":"Original provider","onlineMaps":true}"""
         val p=codec.decodeFromString<Preferences>(old)
         assertFalse(p.cadastreEnabled);assertFalse(p.customOverlayEnabled)
+        assertEquals("My WMS",MapLayers.selectBasemap(p,"Satellite").customLayerName)
         assertEquals(p.customTiles,rasterStack(p).single().url)
         val edited=p.copy(cadastreEnabled=true,cadastreOpacity=0.6f,customOverlayEnabled=true,customOverlayTiles="https://example.org/{z}/{x}/{y}.png",customOverlayAttribution="Custom credit")
         assertEquals(edited,codec.decodeFromString<Preferences>(codec.encodeToString(edited)))
