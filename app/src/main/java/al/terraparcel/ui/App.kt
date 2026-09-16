@@ -222,7 +222,7 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                                 Action("Elevation profile"){showProfile=true}
                                 Action("Screenshot"){handle.map?.snapshot { bitmap->
                                     vm.task {
-                                        val file=withContext(Dispatchers.IO){File(context.cacheDir,"exports").apply{mkdirs()}.let {dir->File(dir,"map.png").apply {outputStream().use {attributedSnapshot(bitmap,prefs).compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)}}}}
+                                        val file=withContext(Dispatchers.IO){File(context.cacheDir,"exports").apply{mkdirs()}.let {dir->File(dir,"map.png").apply {outputStream().use {attributedSnapshot(bitmap,prefs,handle.attribution).compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)}}}}
                                         shareFile(context,file)
                                     }
                                 }}
@@ -314,9 +314,6 @@ private fun navigate(c:Context,p:Parcel,vm:LandViewModel){
     AlertDialog(onDismissRequest=dismiss,title={Text(tr("Go to coordinates"))},text={Column{Text("WGS84 · decimal degrees");CoordinateEdit(Vertex(41.3275,19.8187),go)}},confirmButton={TextButton(onClick=dismiss){Text(tr("Cancel"))}})
 }
 @Composable private fun SettingsPanel(p:Preferences,change:(Preferences)->Unit,backup:()->Unit,restore:()->Unit,export:()->Unit,gps:()->Unit){
-    var tile by remember(p.customTiles){mutableStateOf(p.customTiles)}
-    var attribution by remember(p.attribution){mutableStateOf(p.attribution)}
-    var layer by remember(p.layer){mutableStateOf(if(p.layer=="OpenStreetMap")"Custom" else p.layer)}
     Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)){
         Text(tr("Settings"),style=MaterialTheme.typography.headlineMedium)
         Strip {Action("English"){change(p.copy(language="en"))};Action("Shqip"){change(p.copy(language="sq"))}}
@@ -332,12 +329,7 @@ private fun navigate(c:Context,p:Parcel,vm:LandViewModel){
         Text(tr("Map layers"),style=MaterialTheme.typography.titleLarge)
         Text(tr("Online maps send tile requests revealing the viewed area to the chosen provider. Parcel geometry and GPS history are not uploaded."))
         Row(verticalAlignment=Alignment.CenterVertically){Switch(p.onlineMaps,{change(p.copy(onlineMaps=it))});Text(tr("Enable online maps"))}
-        Action("OpenStreetMap"){change(p.copy(layer="OpenStreetMap"))}
-        Text(tr("Licensed custom raster / WMS / WMTS tiles"))
-        OutlinedTextField(layer,{layer=it},label={Text(tr("Layer name"))},singleLine=true)
-        OutlinedTextField(tile,{tile=it},label={Text("HTTPS tile URL")},supportingText={Text("{z}/{x}/{y} or {bbox-epsg-3857}")})
-        OutlinedTextField(attribution,{attribution=it},label={Text(tr("Provider attribution"))})
-        Action("Apply layer",tile.startsWith("https://") && attribution.isNotBlank() && (tile.contains("{z}") || tile.contains("{bbox-epsg-3857}"))){change(p.copy(layer=layer.ifBlank{"Custom"},customTiles=tile,attribution=attribution))}
+        MapLayerSelector(p,change)
         Text(tr("Use only services whose terms permit use. Cadastral layers are reference data, separate from your measurements."),style=MaterialTheme.typography.bodySmall)
         HorizontalDivider()
         Action("GPS Tools",click=gps)
@@ -348,6 +340,7 @@ private fun navigate(c:Context,p:Parcel,vm:LandViewModel){
         Text(tr("Future features"),style=MaterialTheme.typography.titleMedium)
         Text(tr("Downloadable map regions, MGRS, external Bluetooth GNSS/RTK, Shapefile, GeoPackage and a verified ASIG catalogue are not included in this version."))
         Text("TerraParcel 0.1.2 · WGS84\nMapLibre Native · GeographicLib\n© OpenStreetMap contributors")
+        Text("TerraParcel 0.2.0 · WGS84\nMapLibre Native · GeographicLib\n© OpenStreetMap contributors")
     }
 }
 

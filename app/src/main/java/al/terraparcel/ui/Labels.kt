@@ -5,6 +5,16 @@ import al.terraparcel.R
 // Static references keep localization discoverable by Android resource tooling.
 internal val localizedLabels=mapOf(
     "fit_measurement" to R.string.ui_fit_measurement,
+    "cadastre_is_visible_at_parcel_scales_zoom_13_21_within_albania_missing_service_tiles_leave_the_basemap_visible" to R.string.ui_cadastre_is_visible_at_parcel_scales_zoom_13_21_within_albania_missing_service_tiles_leave_the_basemap_visible,
+    "use_transparent_png_tiles_for_overlays" to R.string.ui_use_transparent_png_tiles_for_overlays,
+    "fit_measurement" to R.string.ui_fit_measurement,
+    "custom_overlay" to R.string.ui_custom_overlay,
+    "custom_basemap" to R.string.ui_custom_basemap,
+    "cadastre_opacity" to R.string.ui_cadastre_opacity,
+    "albania_cadastre" to R.string.ui_albania_cadastre,
+    "overlays" to R.string.ui_overlays,
+    "topographic" to R.string.ui_topographic,
+    "basemap" to R.string.ui_basemap,
     "home" to R.string.ui_home,
     "map" to R.string.ui_map,
     "my_parcels" to R.string.ui_my_parcels,

@@ -120,4 +120,14 @@
     <string name="ui_satellite">Satelit</string>
     <string name="ui_terrain">Terren</string>
     <string name="ui_fit_measurement">Shfaq matjen në hartë</string>
+    <string name="ui_basemap">Harta bazë</string>
+    <string name="ui_topographic">Topografike</string>
+    <string name="ui_overlays">Shtresat mbivendosëse</string>
+    <string name="ui_albania_cadastre">Kadastra e Shqipërisë</string>
+    <string name="ui_cadastre_opacity">Dukshmëria e kadastrës</string>
+    <string name="ui_custom_basemap">Hartë bazë e personalizuar</string>
+    <string name="ui_custom_overlay">Shtresë e personalizuar</string>
+    <string name="ui_fit_measurement">Shfaq matjen në hartë</string>
+    <string name="ui_use_transparent_png_tiles_for_overlays">Përdorni imazhe PNG transparente për shtresat mbivendosëse.</string>
+    <string name="ui_cadastre_is_visible_at_parcel_scales_zoom_13_21_within_albania_missing_service_tiles_leave_the_basemap_visible">Kadastra shfaqet në shkallë parcelash (zmadhimi 13–21), brenda Shqipërisë. Kur mungojnë imazhet e shërbimit, harta bazë mbetet e dukshme.</string>
 </resources>
