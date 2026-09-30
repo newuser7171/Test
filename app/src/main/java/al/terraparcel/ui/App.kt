@@ -88,7 +88,7 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
     var showLayers by remember { mutableStateOf(false) }
     var gpsNow by remember { mutableLongStateOf(SystemClock.elapsedRealtimeNanos()) }
     LaunchedEffect(fix) {
-        while(true) {
+        while(fix!=null) {
             gpsNow=SystemClock.elapsedRealtimeNanos()
             kotlinx.coroutines.delay(1000)
         }
@@ -196,6 +196,7 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                 "GPS Tools"->Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(12.dp)){
                     Text(tr("GPS Tools"),style=MaterialTheme.typography.headlineMedium)
                     Text(fix?.source?.uppercase(Locale.ROOT) ?: "PHONE GPS")
+                    Text(if(fix==null)tr("Waiting for GPS") else gpsRejection?.let {tr(it)} ?: tr(Geo.accuracyLabel(fix?.point?.accuracy)))
                     Text(fix?.point?.let {coordinateText(it)}?:tr("Waiting for GPS"))
                     Text(tr("Speed")+": "+(fix?.speed?.let {number(it.toDouble())+" m/s"}?:"—"))
                     Text(tr("Heading")+": "+(fix?.bearing?.let {number(it.toDouble())+"°"}?:"—"))
@@ -279,16 +280,16 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                 TextButton(onClick={showLayers=false}){Text(tr("Done"))}
             }
             Column(Modifier.weight(1f,false).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-            Text(tr("Online maps send tile requests revealing the viewed area to the chosen provider. Parcel geometry and GPS history are not uploaded."),style=MaterialTheme.typography.bodySmall)
-            Row(verticalAlignment=Alignment.CenterVertically) {
-                Switch(prefs.onlineMaps,{vm.settings(prefs.copy(onlineMaps=it))})
-                Text(tr("Enable online maps"))
-            }
-            MapLayerSelector(prefs,vm::settings)
-            Row(verticalAlignment=Alignment.CenterVertically) {
-                Switch(prefs.showSaved,{vm.settings(prefs.copy(showSaved=it))})
-                Text(tr("Show saved parcels"))
-            }
+                Text(tr("Online maps send tile requests revealing the viewed area to the chosen provider. Parcel geometry and GPS history are not uploaded."),style=MaterialTheme.typography.bodySmall)
+                Row(verticalAlignment=Alignment.CenterVertically) {
+                    Switch(prefs.onlineMaps,{vm.settings(prefs.copy(onlineMaps=it))})
+                    Text(tr("Enable online maps"))
+                }
+                MapLayerSelector(prefs,vm::settings)
+                Row(verticalAlignment=Alignment.CenterVertically) {
+                    Switch(prefs.showSaved,{vm.settings(prefs.copy(showSaved=it))})
+                    Text(tr("Show saved parcels"))
+                }
             }
         }
     }
