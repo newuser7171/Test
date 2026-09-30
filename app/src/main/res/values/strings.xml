@@ -127,7 +127,10 @@
     <string name="ui_cadastre_opacity">Cadastre opacity</string>
     <string name="ui_custom_basemap">Custom basemap</string>
     <string name="ui_custom_overlay">Custom overlay</string>
-    <string name="ui_fit_measurement">Fit measurement</string>
     <string name="ui_use_transparent_png_tiles_for_overlays">Use transparent PNG tiles for overlays.</string>
     <string name="ui_cadastre_is_visible_at_parcel_scales_zoom_13_21_within_albania_missing_service_tiles_leave_the_basemap_visible">Cadastre is visible at parcel scales (zoom 13–21), within Albania. Missing service tiles leave the basemap visible.</string>
+    <string name="ui_done">Done</string>
+    <string name="ui_walking_paused">Walking paused</string>
+    <string name="ui_recording_boundary">Recording boundary</string>
+    <string name="ui_gps_fix_is_stale">GPS fix is stale</string>
 </resources>

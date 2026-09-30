@@ -127,7 +127,10 @@
     <string name="ui_cadastre_opacity">Dukshmëria e kadastrës</string>
     <string name="ui_custom_basemap">Hartë bazë e personalizuar</string>
     <string name="ui_custom_overlay">Shtresë e personalizuar</string>
-    <string name="ui_fit_measurement">Shfaq matjen në hartë</string>
     <string name="ui_use_transparent_png_tiles_for_overlays">Përdorni imazhe PNG transparente për shtresat mbivendosëse.</string>
     <string name="ui_cadastre_is_visible_at_parcel_scales_zoom_13_21_within_albania_missing_service_tiles_leave_the_basemap_visible">Kadastra shfaqet në shkallë parcelash (zmadhimi 13–21), brenda Shqipërisë. Kur mungojnë imazhet e shërbimit, harta bazë mbetet e dukshme.</string>
+    <string name="ui_done">U krye</string>
+    <string name="ui_walking_paused">Ecja është pezulluar</string>
+    <string name="ui_recording_boundary">Duke regjistruar kufirin</string>
+    <string name="ui_gps_fix_is_stale">Pozicioni GPS është i vjetër</string>
 </resources>
