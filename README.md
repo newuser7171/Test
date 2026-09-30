@@ -16,6 +16,12 @@ GitHub Actions builds and tests each push / PR and uploads **TerraParcel-debug-a
 
 For a release, configure your own signing key through environment variables / local Gradle properties and build `assembleRelease`. Never commit signing keys.
 
+## Version 0.2.1
+- Layers opens directly over the map, with satellite, cadastre opacity, custom layers and saved-parcel visibility.
+- GPS status expires stale positions; the GPS point button is enabled only for an acceptable current fix.
+- Returning to the foreground restarts previously requested location updates while keeping boundary recording paused until Resume.
+- Boundary recording shows an explicit recording/paused indicator. Position source reflects the Android provider.
+
 ## First measurement
 1. Open Map. Enable online maps in Layers if desired; otherwise use the offline coordinate canvas.
 2. Choose New polygon. Long-press to add vertices, or use the crosshair + button.

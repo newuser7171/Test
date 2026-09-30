@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.net.Uri
 import android.os.LocaleList
+import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -84,6 +85,16 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
     var showPoint by remember { mutableStateOf(false) }
     var showPhotos by remember { mutableStateOf(false) }
     var showProfile by remember { mutableStateOf(false) }
+    var showLayers by remember { mutableStateOf(false) }
+    var gpsNow by remember { mutableLongStateOf(SystemClock.elapsedRealtimeNanos()) }
+    LaunchedEffect(fix) {
+        while(true) {
+            gpsNow=SystemClock.elapsedRealtimeNanos()
+            kotlinx.coroutines.delay(1000)
+        }
+    }
+    val gpsRejection=fix?.let {RecordingPolicy.rejection(it.point,it.elapsedNanos,gpsNow,prefs.maxAccuracy)}
+    val gpsReady=fix!=null && gpsRejection==null
     var saveDialog by remember { mutableStateOf(false) }
     var coordinateDialog by remember { mutableStateOf(false) }
     var exportDialog by remember { mutableStateOf(false) }
@@ -105,14 +116,19 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
     val photoLauncher=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){it?.let { u->vm.attach(u,photoPoint)}}
     var requestedAction by remember { mutableStateOf("location") }
     fun locationAction(action:String){
-        vm.startLocation()
-        if(action=="walk")vm.startWalk()else{follow=true;fix?.let {handle.go(listOf(it.point))}}
+        if(action=="walk")vm.startWalk()else{vm.startLocation();follow=true}
     }
     val permissionLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){result->
         if(result.values.any {it})locationAction(requestedAction)else vm.message.value="Permission declined; use manual map measurement"
     }
     DisposableEffect(owner){
-        val observer=LifecycleEventObserver { _,e->if(e==Lifecycle.Event.ON_STOP)vm.background() }
+        val observer=LifecycleEventObserver { _,e->
+            when(e) {
+                Lifecycle.Event.ON_STOP->vm.background()
+                Lifecycle.Event.ON_START->vm.resumeLocation()
+                else->Unit
+            }
+        }
         owner.lifecycle.addObserver(observer)
         onDispose {owner.lifecycle.removeObserver(observer)}
     }
@@ -123,7 +139,9 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
     }
     LaunchedEffect(message){message?.let {snackbar.showSnackbar(it);vm.message.value=null}}
     LaunchedEffect(target,page){if(page=="Map" && target.isNotEmpty()){kotlinx.coroutines.delay(500);handle.go(target)}}
-    LaunchedEffect(fix,follow){if(follow)fix?.let {handle.go(listOf(it.point))}}
+    LaunchedEffect(fix,follow){if(follow)fix?.let {
+        if(RecordingPolicy.rejection(it.point,it.elapsedNanos,SystemClock.elapsedRealtimeNanos(),100f)==null)handle.go(listOf(it.point))
+    }}
     if(!ready){Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){CircularProgressIndicator()};return}
     val active=parcels.filter {it.deletedAt==null}
     val metrics=Geo.metrics(draft.points,draft.shape)
@@ -177,7 +195,7 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                 "Settings"->SettingsPanel(prefs,vm::settings,{backupLauncher.launch("TerraParcel-backup.zip")},{restoreWarning=true},{exportAll=true;exportDialog=true},{page="GPS Tools"})
                 "GPS Tools"->Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(12.dp)){
                     Text(tr("GPS Tools"),style=MaterialTheme.typography.headlineMedium)
-                    Text("PHONE GPS")
+                    Text(fix?.source?.uppercase(Locale.ROOT) ?: "PHONE GPS")
                     Text(fix?.point?.let {coordinateText(it)}?:tr("Waiting for GPS"))
                     Text(tr("Speed")+": "+(fix?.speed?.let {number(it.toDouble())+" m/s"}?:"—"))
                     Text(tr("Heading")+": "+(fix?.bearing?.let {number(it.toDouble())+"°"}?:"—"))
@@ -188,7 +206,7 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                     Text(tr("Accuracy labels are guidance only. Accuracy is reported by Android."))
                 }
                 "Map"->{
-                    Strip {Action("Fit measurement",draft.points.isNotEmpty()){follow=false;handle.go(draft.points)};Action("Layers"){page="Settings"};Action("Search"){page="My Parcels"};Action(if(fullScreen)"Exit full screen" else "Full screen"){fullScreen=!fullScreen};Action("GPS Tools"){fullScreen=false;page="GPS Tools"}}
+                    Strip {Action("Fit measurement",draft.points.isNotEmpty()){follow=false;handle.go(draft.points)};Action("Layers"){showLayers=true};Action("Search"){page="My Parcels"};Action(if(fullScreen)"Exit full screen" else "Full screen"){fullScreen=!fullScreen};Action("GPS Tools"){fullScreen=false;page="GPS Tools"}}
                     Box(Modifier.weight(1f).fillMaxWidth()){
                         ParcelMap(Modifier.fillMaxSize(),draft,if(prefs.showSaved)active.filter{it.id!=draft.id}else emptyList(),prefs,fix,selected,handle,{follow=false;vm.add(it)}, {vm.selected.value=it;showPoint=true},{i,p->follow=false;vm.move(i,p)},{scale=it})
                         Text("+",Modifier.align(Alignment.Center),color=Color(0xFF173D36),style=MaterialTheme.typography.headlineLarge)
@@ -206,13 +224,14 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                             Text(if(draft.shape==Shape.POLYGON)number(Geo.area(metrics.first,prefs.areaUnit))+" "+prefs.areaUnit else tr("Distance")+": "+number(Geo.length(metrics.second,prefs.lengthUnit))+" "+prefs.lengthUnit,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
                             Text(tr("Perimeter")+": "+number(Geo.length(metrics.second,prefs.lengthUnit))+" "+prefs.lengthUnit+"  ·  "+draft.points.size+" "+tr("Points"),style=MaterialTheme.typography.bodySmall)
                             val accuracy=fix?.point?.accuracy
-                            Text("GPS: "+(accuracy?.let {"±${number(it.toDouble())} m · "+tr(Geo.accuracyLabel(it))}?:tr("Unknown")),color=if(accuracy!=null && accuracy<=prefs.maxAccuracy)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+                            Text("GPS: "+(if(fix==null)tr("Waiting for GPS") else if(gpsRejection!=null)tr(gpsRejection) else accuracy?.let {"±${number(it.toDouble())} m · "+tr(Geo.accuracyLabel(it))} ?: tr("Unknown")),color=if(gpsReady)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+                            if(walking)Text(tr(if(paused)"Walking paused" else "Recording boundary")+" · "+draft.points.size+" "+tr("Points"),fontWeight=FontWeight.Bold)
                             Strip {
                                 Action("Undo",undo){vm.undo()};Action("Redo",redo){vm.redo()}
                                 Action("Save",!busy && draft.points.isNotEmpty()){vm.stopWalk();saveDialog=true}
                                 if(!walking)Action("GPS Walk"){if(draft.shape!=Shape.POLYGON)vm.message.value="Select a polygon measurement first" else permission="walk"}
                                 else {Action(if(paused)"Resume" else "Pause"){if(paused)vm.startLocation();vm.pauseWalk()};Action("Close Parcel",draft.points.size>=3){vm.stopWalk();saveDialog=true}}
-                                Action("GPS point"){vm.useFix()}
+                                Action("GPS point",gpsReady){vm.useFix()}
                             }
                             Strip {
                                 Action("New polygon"){vm.new(Shape.POLYGON)};Action("New line"){vm.new(Shape.LINE)};Action("New point"){vm.new(Shape.POINT)}
@@ -250,6 +269,26 @@ fun number(d:Double)=String.format(Locale.getDefault(),"%,.2f",d)
                 Action("Move on map"){showPoint=false;vm.message.value="Drag the selected orange point to move it"}
                 CoordinateEdit(p){vm.move(i,it);vm.selected.value=null}
                 Text(tr("Close this sheet to continue drawing."),style=MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+    if(showLayers)ModalBottomSheet(onDismissRequest={showLayers=false}) {
+        Column(Modifier.fillMaxWidth().padding(20.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+                Text(tr("Map layers"),Modifier.weight(1f),style=MaterialTheme.typography.titleLarge)
+                TextButton(onClick={showLayers=false}){Text(tr("Done"))}
+            }
+            Column(Modifier.weight(1f,false).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+            Text(tr("Online maps send tile requests revealing the viewed area to the chosen provider. Parcel geometry and GPS history are not uploaded."),style=MaterialTheme.typography.bodySmall)
+            Row(verticalAlignment=Alignment.CenterVertically) {
+                Switch(prefs.onlineMaps,{vm.settings(prefs.copy(onlineMaps=it))})
+                Text(tr("Enable online maps"))
+            }
+            MapLayerSelector(prefs,vm::settings)
+            Row(verticalAlignment=Alignment.CenterVertically) {
+                Switch(prefs.showSaved,{vm.settings(prefs.copy(showSaved=it))})
+                Text(tr("Show saved parcels"))
+            }
             }
         }
     }
@@ -339,8 +378,7 @@ private fun navigate(c:Context,p:Parcel,vm:LandViewModel){
         Text(tr("Automatic backups keep the last three days on this device. Export a backup to protect against uninstall or device loss."))
         Text(tr("Future features"),style=MaterialTheme.typography.titleMedium)
         Text(tr("Downloadable map regions, MGRS, external Bluetooth GNSS/RTK, Shapefile, GeoPackage and a verified ASIG catalogue are not included in this version."))
-        Text("TerraParcel 0.1.2 · WGS84\nMapLibre Native · GeographicLib\n© OpenStreetMap contributors")
-        Text("TerraParcel 0.2.0 · WGS84\nMapLibre Native · GeographicLib\n© OpenStreetMap contributors")
+        Text("TerraParcel 0.2.1 · WGS84\nMapLibre Native · GeographicLib")
     }
 }
 

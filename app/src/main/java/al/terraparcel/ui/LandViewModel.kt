@@ -15,7 +15,7 @@ import kotlinx.serialization.encodeToString
 import java.io.File
 import java.util.UUID
 
-class LandViewModel(app:Application):AndroidViewModel(app) {
+class LandViewModel @JvmOverloads constructor(app:Application,private val location:LocationSource=PhoneLocation(app)):AndroidViewModel(app) {
     val repo=ParcelRepository(LandDatabase.open(app))
     val parcels=repo.dao.observe().stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),emptyList())
     val categories=repo.dao.categories().stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),emptyList())
@@ -33,11 +33,11 @@ class LandViewModel(app:Application):AndroidViewModel(app) {
     val cameraTarget=MutableStateFlow<List<Vertex>>(emptyList())
     private val undo=ArrayDeque<Draft>()
     private val redo=ArrayDeque<Draft>()
-    private val location=PhoneLocation(app)
     private val photos=File(app.filesDir,"photos").apply { mkdirs() }
     private val backup=Backups(repo,photos)
     private var persistJob:Job?=null
     private var lastFixNanos=0L
+    private var locationRequested=false
     init {
         viewModelScope.launch {
             try {
@@ -82,6 +82,7 @@ class LandViewModel(app:Application):AndroidViewModel(app) {
         viewModelScope.launch { repo.dao.setting(AppSettings("preferences",codec.encodeToString(p))) }
     }
     fun startLocation() {
+        locationRequested=true
         location.start({ f->
             fix.value=f
             if(walking.value && !paused.value) {
@@ -97,7 +98,10 @@ class LandViewModel(app:Application):AndroidViewModel(app) {
     fun pauseWalk(){paused.value=!paused.value}
     fun stopWalk(){walking.value=false;paused.value=false}
     fun background() { if(walking.value){paused.value=true;message.value="Walking paused while app is in background"};location.stop() }
-    fun resumeLocation() { /* Restarted after explicit location action; no background location permission. */ }
+    fun resumeLocation() {
+        // Restore the position marker after foreground return, but keep recording paused.
+        if(locationRequested)startLocation()
+    }
     fun useFix() {
         val f=fix.value?:return run { message.value="Waiting for GPS" }
         val rejection=RecordingPolicy.rejection(f.point,f.elapsedNanos,SystemClock.elapsedRealtimeNanos(),prefs.value.maxAccuracy)

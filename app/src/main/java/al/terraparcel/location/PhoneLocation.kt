@@ -25,7 +25,7 @@ class PhoneLocation(c: Context): LocationSource {
                     if(location.hasAltitude()) location.altitude else null,
                     if(location.hasAccuracy()) location.accuracy else null,location.time),
                     if(location.hasSpeed()) location.speed else null,
-                    if(location.hasBearing()) location.bearing else null,location.elapsedRealtimeNanos))
+                    if(location.hasBearing()) location.bearing else null,location.elapsedRealtimeNanos,location.provider ?: "PHONE GPS"))
             }
             override fun onProviderDisabled(provider: String) { onError("Location provider disabled") }
             override fun onProviderEnabled(provider: String) {}

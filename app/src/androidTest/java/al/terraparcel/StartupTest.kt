@@ -21,6 +21,18 @@ class StartupTest {
         compose.onNodeWithText("Your land, on your device").assertIsDisplayed()
     }
 
+    @Test fun changeLayersWithoutLeavingMeasurement() {
+        awaitHome()
+        compose.onNodeWithText("Map").performClick()
+        compose.onNodeWithText("Layers").performClick()
+        compose.onNodeWithText("Map layers").assertIsDisplayed()
+        compose.onNodeWithText("Satellite").performClick()
+        compose.onNodeWithText("Done").performClick()
+        compose.onNodeWithText("Long-press to add. Tap a vertex, then drag to move.").assertIsDisplayed()
+        compose.onNodeWithText("Layers").performClick()
+        compose.onNodeWithText("Satellite").assertIsDisplayed()
+    }
+
     @Test fun coldLaunchAndRecreationReachNativeMap() {
         // This launches the real Activity and native MapLibre library, not a mocked JVM view.
         awaitHome()
