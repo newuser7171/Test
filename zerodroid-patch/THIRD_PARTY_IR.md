@@ -1,0 +1,1 @@
+USB IR protocol formatter adapted from https://github.com/iodn/android-ir-blaster (GPL-3.0). Original license retained in LICENSE-USB-IR-GPL-3.0. ZeroDroid original code retains its MIT notices. Distribution of the combined derivative must comply with GPL-3.0.

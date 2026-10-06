@@ -1,0 +1,40 @@
+name: ZeroDroid ELKSMART APK
+on:
+  push:
+    branches: [zerodroid-elksmart-build]
+    paths: ['zerodroid-patch/**', '.github/workflows/zerodroid-elksmart.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-37.1' 'build-tools;36.0.0' 'build-tools;37.0.0'
+      - name: Prepare patched source
+        run: |
+          git clone https://github.com/theabhishekchandra/ZeroDroid.git zerodroid-build
+          git -C zerodroid-build checkout 70bb5e964f3f71920b2b5dd0b9c1050c5e479f2c
+          cp -a zerodroid-patch/. zerodroid-build/
+          chmod +x zerodroid-build/gradlew
+      - name: Build and test
+        working-directory: zerodroid-build
+        run: ./gradlew :app:testDebugUnitTest :app:assembleDebug --console=plain -Dorg.gradle.jvmargs=-Xmx4g
+      - name: Package APK and corresponding source
+        run: |
+          mkdir deliverables
+          cp zerodroid-build/app/build/outputs/apk/debug/app-debug.apk deliverables/ZeroDroid-ELKSMART-debug.apk
+          tar --exclude=.git --exclude=.gradle --exclude=build --exclude=local.properties -czf deliverables/ZeroDroid-ELKSMART-source.tar.gz -C zerodroid-build .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZeroDroid-ELKSMART-APK
+          path: deliverables/*
+          if-no-files-found: error
